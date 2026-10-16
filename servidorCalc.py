@@ -7,16 +7,17 @@ servidor.bind(('127.0.0.1', 8000))
 servidor.listen()
 print('Aguardando conexao...')
 
-conexao, endereco = servidor.accept()
-with conexao:
+
+while True:
+    conexao, endereco = servidor.accept()
     print('Conectado por:', endereco)
-    while True:
+    
+    with conexao:
         dados = conexao.recv(1024)
         if not dados:  
-            break
+            continue 
             
         mensagem = dados.decode()
-        
         partes = mensagem.split(";")
         operation = partes[0]
         
@@ -29,7 +30,7 @@ with conexao:
             try:
                 valor = float(partes[1]) / float(partes[2])
             except ZeroDivisionError:
-                valor=0
+                valor = 0
         elif operation == "*":
             valor = float(partes[1]) * float(partes[2])
         elif operation == "**2":
@@ -41,20 +42,16 @@ with conexao:
                 imagem = Image.open(partes[1])
                 imagem_redimensionada = imagem.resize((int(partes[3]), int(partes[4])))
                 imagem_redimensionada.save(partes[2])
-                valor=os.path.getsize(partes[2])
+                valor = os.path.getsize(partes[2])
             except FileNotFoundError:
                 valor = 0
-
-            except UnidentifiedImageError:
-                valor = 0
-
-            except PermissionError:
-                valor = 0
-
-            except (OSError, ValueError) as erro:
+            except Exception:
                 valor = 0
         else:
             valor = 0
 
-        
+        print(operation)
         conexao.sendall(str(valor).encode())
+        
+   
+    print('Conexao encerrada. Aguardando nova conexao...')
